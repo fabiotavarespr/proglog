@@ -42,9 +42,6 @@ endif
 .DEFAULT_GOAL := help
 .PHONY: help
 
-test: ## Launch tests
-	go test ./...
-
 about: ## Display info related to the build
 	@echo "OS: ${OS}"
 	@echo "Shell: ${SHELL} ${SHELL_VERSION}"
@@ -70,3 +67,12 @@ fmt: tidy ## Run go fmt
 
 run-api: fmt ## Run api
 	@$(GOCMD) run ./cmd/server/main.go
+
+compile: fmt ## Compile protobuf files
+	protoc api/v1/*.proto \
+		--go_out=. \
+		--go_opt=paths=source_relative \
+		--proto_path=.
+
+test: fmt ## Launch tests
+	@$(GOTEST) -race ./...
