@@ -74,5 +74,8 @@ compile: fmt ## Compile protobuf files
 		--go_opt=paths=source_relative \
 		--proto_path=.
 
-test: fmt ## Launch tests
+test: fmt clean-cache ## Launch tests
 	@$(GOTEST) -race ./...
+
+clean-cache: ## Clean cache
+	@$(GOCMD) clean -testcache
