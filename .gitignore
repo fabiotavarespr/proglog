@@ -13,3 +13,11 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
+# Certs
+ca-key.pem
+ca.csr
+ca.pem
+server-key.pem
+server.csr
+server.pem

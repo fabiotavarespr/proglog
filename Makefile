@@ -5,6 +5,7 @@ BIN_DIR = bin
 PROTO_DIR = proto
 SERVER_DIR = server
 CLIENT_DIR = client
+CONFIG_PATH=${PWD}/.proglog/
 
 ifeq ($(OS), Windows_NT)
 	SHELL := powershell.exe
@@ -41,6 +42,8 @@ endif
 
 .DEFAULT_GOAL := help
 .PHONY: help
+help: ## Show this help
+	@${HELP_CMD}
 
 about: ## Display info related to the build
 	@echo "OS: ${OS}"
@@ -50,11 +53,8 @@ about: ## Display info related to the build
 	@echo "Go package: ${PACKAGE}"
 	@echo "Openssl version: $(shell openssl version)"
 
-help: ## Show this help
-	@${HELP_CMD}
-
 grpc-install-mac: ## Install GRPC dependencies
-	@brew install protobuf protoc-gen-go protoc-gen-go-grpc
+	@brew install protobuf protoc-gen-go protoc-gen-go-grpc cfssl
 
 grpc-check: ## Check if grpc has installed
 	@protoc --version
@@ -68,6 +68,7 @@ fmt: tidy ## Run go fmt
 run-api: fmt ## Run api
 	@$(GOCMD) run ./cmd/server/main.go
 
+.PHONY: compile
 compile: fmt ## Compile protobuf files
 	protoc api/v1/*.proto \
 		--go_out=. \
@@ -76,8 +77,29 @@ compile: fmt ## Compile protobuf files
 		--go-grpc_opt=paths=source_relative \
 		--proto_path=.
 
+.PHONY: test
 test: fmt clean-cache ## Launch tests
 	@$(GOTEST) -race ./...
 
 clean-cache: ## Clean cache
 	@$(GOCMD) clean -testcache
+
+.PHONY: init
+init:  ## Config inital path
+	mkdir -p ${CONFIG_PATH}
+
+.PHONY: gencert
+gencert:  ## auto-generate cert
+	cfssl gencert \
+		-initca scripts/test/ca-csr.json | cfssljson -bare ca
+
+	cfssl gencert \
+		-ca=ca.pem \
+		-ca-key=ca-key.pem \
+		-config=scripts/test/ca-config.json \
+		-profile=server \
+		scripts/test/server-csr.json | cfssljson -bare server
+
+.PHONY: delcert
+delcert: ## Remove auto-generate cert
+	rm -rf ca-key.pem ca.csr ca.pem server-key.pem server.pem server.csr
