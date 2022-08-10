@@ -5,7 +5,7 @@ BIN_DIR = bin
 PROTO_DIR = proto
 SERVER_DIR = server
 CLIENT_DIR = client
-CONFIG_PATH=${PWD}/.proglog/
+CONFIG_PATH=${HOME}/.proglog/
 
 ifeq ($(OS), Windows_NT)
 	SHELL := powershell.exe
@@ -100,6 +100,19 @@ gencert:  ## auto-generate cert
 		-profile=server \
 		scripts/test/server-csr.json | cfssljson -bare server
 
+	cfssl gencert \
+		-ca=ca.pem \
+		-ca-key=ca-key.pem \
+		-config=scripts/test/ca-config.json \
+		-profile=client \
+		scripts/test/client-csr.json | cfssljson -bare client
+
+	mv *.pem *.csr ${CONFIG_PATH}
+
+.PHONY: listcert
+listcert: ## Remove auto-generate cert
+	ls -la ${CONFIG_PATH}*
+
 .PHONY: delcert
 delcert: ## Remove auto-generate cert
-	rm -rf ca-key.pem ca.csr ca.pem server-key.pem server.pem server.csr
+	rm -rf ${CONFIG_PATH}*
