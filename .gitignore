@@ -24,3 +24,9 @@ server.pem
 client-key.pem
 client.csr
 client.pem
+nobody-client-key.pem
+nobody-client.csr
+nobody-client.pem
+root-client-key.pem
+root-client.csr
+root-client.pem
