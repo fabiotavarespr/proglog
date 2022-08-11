@@ -78,7 +78,7 @@ compile: fmt ## Compile protobuf files
 		--proto_path=.
 
 .PHONY: test
-test: fmt clean-cache ## Launch tests
+test: fmt clean-cache $(CONFIG_PATH)/model.conf $(CONFIG_PATH)/policy.csv ## Launch tests
 	@$(GOTEST) -race ./...
 
 clean-cache: ## Clean cache
@@ -107,12 +107,35 @@ gencert:  ## auto-generate cert
 		-profile=client \
 		scripts/test/client-csr.json | cfssljson -bare client
 
+	cfssl gencert \
+		-ca=ca.pem \
+		-ca-key=ca-key.pem \
+		-config=scripts/test/ca-config.json \
+		-profile=client \
+		-cn="root" \
+		scripts/test/client-csr.json | cfssljson -bare root-client
+
+	cfssl gencert \
+		-ca=ca.pem \
+		-ca-key=ca-key.pem \
+		-config=scripts/test/ca-config.json \
+		-profile=client \
+		-cn="nobody" \
+		scripts/test/client-csr.json | cfssljson -bare nobody-client
+
 	mv *.pem *.csr ${CONFIG_PATH}
+
+$(CONFIG_PATH)/model.conf:
+	cp scripts/test/model.conf $(CONFIG_PATH)/model.conf
+
+$(CONFIG_PATH)/policy.csv: 
+	cp scripts/test/policy.csv $(CONFIG_PATH)/policy.csv
 
 .PHONY: listcert
 listcert: ## Remove auto-generate cert
-	ls -la ${CONFIG_PATH}*
+	ls -la ${CONFIG_PATH}
 
 .PHONY: delcert
 delcert: ## Remove auto-generate cert
+	rm -rf *.pem *.csr
 	rm -rf ${CONFIG_PATH}*
